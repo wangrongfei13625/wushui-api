@@ -1,0 +1,71 @@
+
+server:
+  port: 11100
+
+http:
+  eureka:
+    serviceUrl: 127.0.0.1
+
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${http.eureka.serviceUrl}:8761/eureka/
+
+  instance:
+    prefer-ip-address: true
+
+endpoints:
+restart:
+  enabled: true
+shutdown:
+  enabled: true
+health:
+  sensitive: false
+
+
+zuul:
+  routes:
+    api-webchat:
+      path: /webchat/**
+      serviceId: webchat-api
+      sensitiveHeaders: "*"
+    api-member:
+      path: /member/**
+      serviceId: member-api
+      sensitiveHeaders: "*"
+    #session保持一致
+    intelligentsia-authority:
+      sensitiveHeaders: Authorization
+  max:
+    host:
+      connections: 500
+  host:
+    socket-timeout-millis: 60000
+    connect-timeout-millis: 60000
+
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 60000
+#ribbon的超时时间
+ribbon:
+  eureka:
+    enabled: false
+  ReadTimeout: 60000
+  ConnectTimeout: 60000
+  MaxAutoRetries: 0
+  MaxAutoRetriesNextServer: 1
+  OkToRetryOnAllOperations: false
+
+webchat-api:
+  ribbon:
+    listOfServers: 127.0.0.1:8089
+member-api:
+  ribbon:
+    listOfServers: 127.0.0.1:8090
+
+

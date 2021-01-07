@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.huaxin.webchat.mapper.EtlWarnHistoryMapper">
+
+    <select id="findList" parameterType="map" resultType="map">
+        select
+            history_id,
+            organization_id,
+            data_id,
+            DATA_STATE_ID,
+            EXCEED,DATA_DATE,
+            DATA_VALUE,
+            CONFIG_ID,
+            RECORD_TIME
+         from  etl_warn_history where 1=1
+         <if test="historyId!=null and historyId!=''">
+            and history_id = #{historyId}
+         </if>
+
+        <if test="orgId!=null and orgId!=''">
+            and organization_id = #{orgId}
+        </if>
+
+         order by RECORD_TIME desc
+
+    </select>
+
+    <insert id="saveWeChart" parameterType="map">
+        REPLACE into etl_warn_history(
+        history_id,
+        organization_id,
+        data_id,
+        DATA_STATE_ID,
+        EXCEED,DATA_DATE,
+        DATA_VALUE,
+        CONFIG_ID
+        )
+        values
+        (
+        #{historyId}
+        #{orgId},
+        #{dataId},
+        #{dataStateId},
+        #{exceed},
+        #{dataDate},
+        #{dataValue},
+        #{configId}
+
+       )
+    </insert>
+
+
+
+</mapper>

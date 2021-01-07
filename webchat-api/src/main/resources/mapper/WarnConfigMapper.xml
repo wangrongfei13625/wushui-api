@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.huaxin.webchat.mapper.WarnConfigMapper">
+
+    <select id="findByOrgIdAndDataId" parameterType="map" resultType="map">
+        select a.* from etl_warn_config a
+        <if test="organizationId!=null and organizationId!=''">
+            and a.organization_id = #{organizationId}
+        </if>
+        <if test="dataId!=null and dataId!=''">
+            and a.data_id = #{dataId}
+        </if>
+
+
+
+    </select>
+
+
+    <select id="findPointInfo" parameterType="map" resultType="map">
+        select l.mapInfoid,m.organizationid from sh_linkmapinfodata l ,sh_mapinfo m
+        where l.mapInfoid=m.mapinfoid
+        <if test="organizationId!=null and organizationId!=''">
+            and l.organizationId = #{organizationId}
+        </if>
+        <if test="dataId!=null and dataId!=''">
+             and l.dataid= = #{dataId}
+        </if>
+
+
+
+    </select>
+
+
+    <select id="findDataName" parameterType="map" resultType="map">
+        select dataName,dataUnit from rt_dataInfo where 1=1
+        <if test="dataId!=null and dataId!=''">
+            and dataId= = #{dataId}
+        </if>
+
+    </select>
+
+    <select id="findOrganizationName" parameterType="map" resultType="map">
+        select organizationid,organizationname from hx_organization where 1=1
+        <if test="organizationId!=null and organizationId!=''">
+            and organizationid = #{organizationId}
+        </if>
+
+    </select>
+
+    <select id="findRealDataColorStateName" parameterType="map" resultType="map">
+        select * from rt_datacolorstate where 1=1
+        <if test="dataStateId!=null and dataStateId!=''">
+            and datastateid = #{dataStateId}
+        </if>
+
+    </select>
+
+    <select id="findUserIdByOrgId" parameterType="java.lang.String" resultType="map">
+        select userId from hx_organizationInfo where parentId in (
+        select organizationInfoId from hx_organizationInfo
+        where organizationId in (${orgIds})
+        and userId is null ) and userId is not null
+
+
+    </select>
+
+    <select id="findUsersByRoleId" parameterType="java.lang.Integer" resultType="map">
+        select * from hx_user where userid in (
+        select userid from hx_user_role where roleid in (
+        select roleid from hx_role where roleid in (${role})))
+
+
+    </select>
+
+    <select id="findUserId" parameterType="java.lang.String" resultType="map">
+        select * from hx_user where userid =#{id}
+
+
+    </select>
+
+
+    <select id="findWebChatOfUserId" parameterType="java.lang.String" resultType="map">
+        select user_id,user_name,webchat_num
+
+        from rt_user_webchat where user_id =#{id}
+    </select>
+
+
+
+
+</mapper>

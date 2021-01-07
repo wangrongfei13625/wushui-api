@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: config-api
+    profiles:
+      active: native #配置文件在本地

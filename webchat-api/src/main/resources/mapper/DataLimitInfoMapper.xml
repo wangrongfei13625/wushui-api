@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.huaxin.webchat.mapper.DataLimitInfoMapper">
+
+    <select id="findAll" parameterType="map" resultType="map">
+        select rtl.organizationId,rtl.dataId,rtl.dataInaccuracy,rtl.startTime,rtl.endTime,
+          rtl.dataStateID,rtl.extendExpression,rtc.dataExceed,rtl.actionTime,rtl.false_time
+
+        from RT_DATALIMITINFO rtl,RT_dataColorState rtc where rtl.dataStateId = rtc.dataStateId
+
+        and rtl.false_time  >= NOW()
+
+        order by actionTime desc
+    </select>
+
+</mapper>

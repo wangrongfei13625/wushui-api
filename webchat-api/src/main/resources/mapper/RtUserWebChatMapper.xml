@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.huaxin.webchat.mapper.RtUserWebChatMapper">
+
+    <select id="findList" parameterType="map" resultType="map">
+
+        select id,user_id,user_name,webchat_num,webchat_name,create_time
+
+        from rt_user_webchat
+
+        where 1=1
+        <if test="userId!=null and userId!=''">
+            and user_id=#{userId}
+        </if>
+        <if test="webChatNum!=null and webChatNum!=''">
+            and webchat_num=#{webChatNum}
+        </if>
+        <if test="userName!=null and userName!=''">
+            and user_name like concat('%',#{userName},'%')
+        </if>
+        order by create_time desc
+
+
+    </select>
+
+    <insert id="saveOfUpdateWebChat" parameterType="map">
+
+        REPLACE INTO rt_user_webchat
+            (id,
+            user_id,
+            user_name,
+            webchat_num,
+            webchat_name)
+        VALUES (
+          #{id},
+          #{userId},
+          #{userName},
+          #{webChatNum},
+          #{webChatName}
+        );
+    </insert>
+
+    <delete id="deleteWebChat" parameterType="map">
+        delete from rt_user_webchat where 1=1
+        <if test="ids!='' and ids!=null">
+            and id  in
+            <foreach collection="ids" item="id" index="index" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </delete>
+
+</mapper>

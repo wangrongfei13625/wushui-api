@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.huaxin.webchat.mapper.RtDataColorStateMapper">
+
+    <select id="findList" parameterType="map" resultType="map" >
+
+        select DATASTATEID,DATASTATENAME,DATATYPE,DATAEXCEED,DATASTATECOLOR,DATASTATEMARK
+        from rt_datacolorstate where 1=1
+        <if test="dataStateId!=null and dataStateId!=''">
+            and DATASTATEID=#{dataStateId}
+        </if>
+        <if test="dataType!=null and dataType!=''">
+            and DATATYPE=#{dataType}
+        </if>
+        order by DATASTATEID desc
+    </select>
+
+    <insert id="saveOfUpdateState" parameterType="map">
+
+        REPLACE INTO rt_datacolorstate
+        (DATASTATEID,
+        DATASTATENAME,
+        DATATYPE,
+        DATAEXCEED,
+        DATASTATECOLOR,
+        DATASTATEMARK
+        )
+        VALUES (
+        #{dataStateId},
+        #{dataStateName},
+        #{dataType},
+        #{dataExceed},
+        #{dataStateColor},
+        #{DataStateMark}
+        );
+    </insert>
+
+    <delete id="deleteRtDataColorState" parameterType="map">
+        delete from rt_datacolorstate where 1=1
+        <if test="ids!='' and ids!=null">
+            and DATASTATEID  in
+            <foreach collection="ids" item="id" index="index" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </delete>
+
+</mapper>

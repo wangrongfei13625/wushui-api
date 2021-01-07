@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.huaxin.webchat.mapper.RtDataLimitInfoMapper">
+
+    <select id="findList" parameterType="map" resultType="map">
+
+        select r.LIMITINFOID,r.DATAID,r.ORGANIZATIONID,r.DATAINACCURACY,r.ACTIONTIME,r.DATASTATEID,
+        r.EXTENDEXPRESSION,r.DISPLAYEXPRESSION,r.STARTTIME,r.ENDTIME,r.FALSE_TIME,r.DATA_NAME
+
+        from rt_datalimitinfo r
+
+        where 1=1
+        <if test="limitInfoId!=null and limitInfoId!=''">
+            and r.LIMITINFOID=#{limitInfoId}
+        </if>
+        <if test="orgId!=null and orgId!=''">
+            and r.ORGANIZATION_ID=#{orgId}
+        </if>
+        order by r.LIMITINFOID desc
+
+
+    </select>
+
+
+    <insert id="saveOfUpdateInfo" parameterType="map">
+
+        REPLACE INTO rt_datalimitinfo
+            (LIMITINFOID,
+            DATAID,
+            DATA_NAME,
+            ORGANIZATIONID,
+            DATAINACCURACY,
+            ACTIONTIME,
+            DATASTATEID,
+            EXTENDEXPRESSION,
+            DISPLAYEXPRESSION,
+            STARTTIME,
+            ENDTIME,
+            FALSE_TIME)
+        VALUES (
+          #{limitInfoId},
+          #{dataId},
+          #{dataName},
+          #{orgId},
+          #{dataInaccuracy},
+          #{actionTime},
+          #{dataStateID},
+          #{extendExpression},
+          #{displayExpression},
+          #{startTime},
+          #{endTime},
+          #{falseTime}
+        );
+    </insert>
+
+    <delete id="deleteEtlWarnConfig" parameterType="map">
+        delete from rt_datalimitinfo where 1=1
+        <if test="ids!='' and ids!=null">
+            and LIMITINFOID  in
+            <foreach collection="ids" item="id" index="index" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </delete>
+
+
+</mapper>
