@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.netflix.feign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
@@ -13,6 +14,7 @@ import org.springframework.web.servlet.DispatcherServlet;
 @SpringBootApplication(exclude={DataSourceAutoConfiguration.class},scanBasePackages={"com.huaxin"})
 @EnableDiscoveryClient
 @EnableScheduling
+@EnableFeignClients
 public class WebchatApplication {
 
     public static void main(String[] args) {

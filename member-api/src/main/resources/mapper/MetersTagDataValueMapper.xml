@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.huaxin.member.mapper.MetersTagDataValueMapper">
+
+    <select id="findListOfDataId" parameterType="map" resultType="map">
+        select distinct
+        m.TAG_ID as dataId,i.TAG_DESC as dataName,m.TOTAL as dataValue,
+        CONVERT(varchar, m.COLLECT_TIME, 120 ) collectTime,CONVERT(varchar, m.UPDATE_TIME, 120 ) as updateTime
+        from METERS_TAG_DATA m left join METERS_TAG_INFO i on m.TAG_ID = i.TAG_ID
+
+        where 1=1
+        <if test="time!=null and time!=''">
+            and CONVERT(varchar, m.UPDATE_TIME, 120 ) =  #{time}
+        </if>
+
+
+
+
+    </select>
+
+</mapper>

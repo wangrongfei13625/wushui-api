@@ -30,7 +30,7 @@ public class RtDataColorStateServiceImpl implements RtDataColorStateService {
             map.put("dataType",stateMap.get("DATATYPE")==null?null:stateMap.get("DATATYPE").toString());
             map.put("dataExceed",stateMap.get("DATAEXCEED")==null?null:stateMap.get("DATAEXCEED").toString());
             map.put("dataStateColor",stateMap.get("DATASTATECOLOR")==null?null:stateMap.get("DATASTATECOLOR").toString());
-            map.put("DataStateMark",stateMap.get("DATASTATEMARK")==null?null:stateMap.get("DATASTATEMARK").toString());
+            map.put("dataStateMark",stateMap.get("DATASTATEMARK")==null?null:stateMap.get("DATASTATEMARK").toString());
             list.add(map);
         }
 
@@ -49,7 +49,7 @@ public class RtDataColorStateServiceImpl implements RtDataColorStateService {
             map.put("dataType",stateMap.get("DATATYPE")==null?null:stateMap.get("DATATYPE").toString());
             map.put("dataExceed",stateMap.get("DATAEXCEED")==null?null:stateMap.get("DATAEXCEED").toString());
             map.put("dataStateColor",stateMap.get("DATASTATECOLOR")==null?null:stateMap.get("DATASTATECOLOR").toString());
-            map.put("DataStateMark",stateMap.get("DATASTATEMARK")==null?null:stateMap.get("DATASTATEMARK").toString());
+            map.put("dataStateMark",stateMap.get("DATASTATEMARK")==null?null:stateMap.get("DATASTATEMARK").toString());
             list.add(map);
         }
 

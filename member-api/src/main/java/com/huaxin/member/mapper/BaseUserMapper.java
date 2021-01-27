@@ -10,7 +10,9 @@ import java.util.Map;
 @Mapper
 public interface BaseUserMapper {
 
-    List<Map<String,Object>> findByUser();
+    List<Map<String,Object>> findByUser(Map<String,Object> params);
+
+    List<Map<String,Object>> findHoDepartment(Map<String,Object> params);
 
 
 }

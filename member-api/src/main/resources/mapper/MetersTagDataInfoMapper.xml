@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.huaxin.member.mapper.MetersTagDataInfoMapper">
+
+    <select id="findList" parameterType="map" resultType="map">
+        select
+          ID,TAG_ID as dataId,AREA_ID,TAG_NAME tagName,TAG_DESC as dataName,REMARK
+        from METERS_TAG_INFO
+
+        where 1=1
+        <if test="dataId!=null and dataId!=''">
+            and TAG_ID = #{dataId}
+        </if>
+
+        <if test="dataName!=null and dataName!=''">
+            and TAG_DESC like  '%'+#{dataName}+'%'
+        </if>
+
+
+    </select>
+
+</mapper>

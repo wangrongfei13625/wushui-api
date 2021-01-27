@@ -1,13 +1,19 @@
 package com.huaxin.webchat.scheduler;
 
 import com.github.pagehelper.util.StringUtil;
+import com.huaxin.webchat.fegin.MemberInfoFeign;
 import com.huaxin.webchat.mapper.EtlWarnHistoryMapper;
 import com.huaxin.webchat.mapper.HxConfigMapper;
 import com.huaxin.webchat.mapper.RealDataDoubleValueMapper;
 import com.huaxin.webchat.mapper.WarnConfigMapper;
+import com.huaxin.webchat.model.BizException;
+import com.huaxin.webchat.model.DoctorReplyMsgData;
+import com.huaxin.webchat.model.KeyNote;
 import com.huaxin.webchat.unit.ConnectDB;
+import com.huaxin.webchat.unit.EnumsUtils;
 import com.huaxin.webchat.unit.HttpUtils;
 import com.huaxin.webchat.unit.PropUtil;
+import com.huaxin.webchat.unit.base.ResultJson;
 import net.sf.json.JSONObject;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -39,6 +45,9 @@ public class WebChatSendMessage {
 
     @Autowired
     private EtlWarnHistoryMapper etlWarnHistroyMapper;
+
+    @Autowired
+    private MemberInfoFeign memberInfoFeign;
 
     private static Map<String, String> BlueB = new HashMap<String, String>();  //保存蓝鸟库上次的超标过滤
 
@@ -73,12 +82,20 @@ public class WebChatSendMessage {
 
         //List<Map<String,Object>> list = realDataDoubleValueMapper.findValueByTime("2020-12-10 10:15:00");
         //获取蓝鸟，三高数据，来进行处理 判断 数据是否超标
+        Map<String,Object> params =new HashMap<>();
+        params.put("time","2021-01-14 16:30:00");
 
+        Object object = memberInfoFeign.findListOfDataId(params);
+        Map<String,Object> objectMap = (Map<String,Object>)object;
+        Object data = objectMap.get("data");
+        List<Map<String, Object>> list = new ArrayList<>();
+        if (null != data) {
+            list.addAll((List<Map<String, Object>>) data);
+        }
 
-        List<Map<String,Object>> list = blueBirdieETL( startTime, endTime);
         for(Map<String,Object> map:list){
 
-            String orgId = map.get("ORGANIZATIONID").toString();
+            String orgId = map.get("orgId").toString();
             String dataId = map.get("dataId").toString();
             String dataValue = map.get("dataValue").toString();
 
@@ -122,92 +139,6 @@ public class WebChatSendMessage {
 
 
 
-
-    //蓝鸟数据采集
-    public List<Map<String,Object>> blueBirdieETL(String startTime,String endTime) {
-        List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
-        try {
-            SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            Connection conn = null;
-            try {
-
-                //连接数据库
-                ConnectDB db = new ConnectDB("0", "runtime", "10.10.30.246", "1433", "sa", "eddc6aecd52b1613e1d05ce39050585e");
-                conn = db.getConnection();
-                if (conn == null) {
-                    //数据库连接失败
-                    return null;
-                }
-
-                log.error("开始时间:" + startTime + "----结束时间:" + endTime);
-                //获取查询的tagName 需要采集数据的点位
-                String tagNameAll = propUtil.getProperty("Heda_Project");
-
-                Map<String, Object> tagMap = new HashMap<String, Object>(); //所有要查询的数据
-                for (String tag : tagNameAll.split(",")) {
-                    tagMap.put(tag.replace("'", "").toUpperCase(), "");
-                }
-                //List<String> tagList = new ArrayList<String>(); //本次查到数据的
-                //region 抽取程序
-                PreparedStatement preparedStatement = null;
-                ResultSet resultSet = null;
-                try {
-                    String sql = "SELECT  * FROM (\n" +
-                            "SELECT History.TagName, DateTime = convert(nvarchar, DateTime, 20), Value,  StartDateTime\n" +
-                            " FROM History\n" +
-                            " WHERE History.TagName IN (" + tagNameAll + ")\n" +
-                            " AND wwRetrievalMode = 'Cyclic'\n" +
-                            " AND wwResolution = 300000\n" +
-                            " AND wwQualityRule = 'Optimistic'\n" +
-                            " AND wwVersion = 'Latest'\n" +
-                            " AND DateTime >= convert(dateTime, '#startTime')\n" +
-                            " AND DateTime <= convert(dateTime, '#endTime')) temp WHERE temp.StartDateTime >=  convert(dateTime, '#startTime')";
-                    sql = sql.replace("#startTime", startTime).replace("#endTime", endTime);
-                    preparedStatement = conn.prepareStatement(sql);
-                    resultSet = preparedStatement.executeQuery();
-                    while (resultSet.next()) {
-                        String dataDate = resultSet.getString("DateTime");
-                        String dataValue = resultSet.getString("Value");
-                        String dataId = resultSet.getString("TagName").toUpperCase();
-
-                        //dataDate = sf.format(dataDate);  //数据时间
-
-                        Map<String, Object> map = new HashMap<String, Object>();
-                        map.put("dataId", dataId);
-                        map.put("dataDate", dataDate);
-                        map.put("dataValue", dataValue);
-                        list.add(map);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    log.error("蓝鸟抽取出错:", e);
-                } catch (Throwable t) {
-                    t.printStackTrace();
-                    log.error("蓝鸟抽取出错:", t);
-                } finally {
-                    if (resultSet != null) {
-                        resultSet.close();
-                    }
-                    if (preparedStatement != null) {
-                        preparedStatement.close();
-                    }
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                log.error("蓝鸟抽取出错", e);
-            }
-        }catch (Exception e) {
-            e.printStackTrace();
-            log.error("蓝鸟抽取出错", e);
-        }
-        return list;
-    }
-
-
-
-
-
     public boolean isMsgExceed(String dataStateId, String extendExpression, String dataValue) {
         double warnValue = 0.0;
         boolean warnFlag = false;
@@ -239,7 +170,7 @@ public class WebChatSendMessage {
 
             String configValue = configList.get(0).get("CONFIGVALUE").toString();
 
-            String limitValue;
+            String limitValue  = "";
 
             if ("1".equals(configValue)) {
                 Map<String,Object> params = new HashMap<>();
@@ -249,7 +180,7 @@ public class WebChatSendMessage {
                 // 查询需要推送的人员
                 List<Map<String, Object>> warnConfigList = warnConfigMapper.findByOrgIdAndDataId(params);
 
-                limitValue = "";
+
                 if (("2".equals(dataStateId)) || ("4".equals(dataStateId))) {
                     String leftValue = extendExpression.split("\\,")[0];
                     limitValue = leftValue.substring(1);
@@ -293,7 +224,7 @@ public class WebChatSendMessage {
 
                         String[] msgTypes = warnType.split(",");
                         String ids = "";
-                        String response;
+                        ResultJson resultJson =null;
                         for (String msgType : msgTypes) {
                             String[] objectIds = objectId.split(";");
                             for (int i = 0; i < objectIds.length; i++) {
@@ -303,15 +234,12 @@ public class WebChatSendMessage {
                             }
 
                             String[] id = ids.split(",");
-                            //Set userNameSet = new HashSet();
-                            //Set webChatSet = new HashSet();
+
                             String webChatNum ="";
                             // 根据用户ID 查询 得到用户名 微信名
                             for (int i = 0; i < id.length; i++) {
 
                                 List<Map<String,Object>> usersList = warnConfigMapper.findWebChatOfUserId(id[i]);
-                                /*String userName = usersList.get(0).get("user_name").toString();
-                                userNameSet.add(userName);*/
 
                                 String webChat = usersList.get(0).get("webchat_num").toString();
                                 webChatNum +=webChat +"|";
@@ -337,7 +265,7 @@ public class WebChatSendMessage {
                             String corpId = propUtil.getProperty("corpId");
                             String corpSecret = propUtil.getProperty("corpSecret");
                             String AgentId = propUtil.getProperty("AgentId");
-                            String access_token =getAccessToken(corpId,corpSecret);
+                            String access_token =getAccessToken(corpId,corpSecret,"0");
 
                             JSONObject jsonObject = new JSONObject();
                             jsonObject.put("touser", webChatNum);//需要推送的用户 UserID1|UserID2|UserID3
@@ -348,8 +276,9 @@ public class WebChatSendMessage {
                             jsonObject.put("text",mytext);
 
                             try {
-                                 response= HttpUtils.httpPostMethod("https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=" + access_token, params);
-                                log.error("微信推送http："+response);
+                                 String response= HttpUtils.httpPostMethod("https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=" + access_token, jsonObject);
+                                 resultJson = new ResultJson(EnumsUtils.SUCCESS);
+                                log.info("发送企业微信消息成功，response = " + resultJson);
                                 /*com.alibaba.fastjson.JSONObject obj = JSON.parseObject( response);
                                 String errmsg = obj.getString("errmsg");
                                  //获取返回code==200访问成功 ==500失败
@@ -360,14 +289,16 @@ public class WebChatSendMessage {
                                     log.error("微信推送返回："+html);
                                 }
 */
-                            } catch (Exception e) {
-                                e.printStackTrace();
+                            } catch (BizException e) {
+
+                                resultJson = new ResultJson(e.getEnumsUtils().getCode(), e.getEnumsUtils().getMsg());
+
                             }
                         }
                     }
                 }
             }
-            log.error("sendMsg2");
+
         } catch (Exception e) {
             log.error("",e);
         }catch (Throwable t){
@@ -602,12 +533,81 @@ public class WebChatSendMessage {
 
 
     public static void main(String[] args) {
+            /*String appId= "wx61d65ff823f842ec";
+            String secret="082049cdaa5811722feae9ac2028f230";
+            WebChatSendMessage webChatSendMessage = new WebChatSendMessage();
+            String token = webChatSendMessage.getAccessToken(appId,secret,"1");
+            System.out.println(token);
+
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("touser", "@all");//需要推送的用户 UserID1|UserID2|UserID3
+            jsonObject.put("template_id", "meTou5YRlzkwWUnyfTnPEcaEcQDsa5hJhVOT9eWJTlw");
+            jsonObject.put("page", "index");
+            jsonObject.put("miniprogram_state", "developer");
+
+            DoctorReplyMsgData doctorReplyMsgData = new DoctorReplyMsgData();
+            KeyNote keyword1 = new KeyNote();
+            keyword1.setValue("进水压力异常");
+            doctorReplyMsgData.setThing1(keyword1);
+
+            KeyNote keyword2 = new KeyNote();
+            keyword2.setValue("2019-10-22 14:41:11");
+            doctorReplyMsgData.setThing2(keyword2);
+
+            KeyNote keyword3 = new KeyNote();
+            keyword3.setValue("无");
+            doctorReplyMsgData.setThing3(keyword3);
+
+            KeyNote keyword4 = new KeyNote();
+            keyword4.setValue("制水部");
+            doctorReplyMsgData.setThing4(keyword4);
+
+            jsonObject.put("data",doctorReplyMsgData);
+
+
+            String response= HttpUtils.httpPostMethod("https://api.weixin.qq.com/cgi-bin/message/subscribe/send?access_token=" + token, jsonObject);
+
+        System.out.println(response);*/
+
+
+        //微信推送
+        WebChatSendMessage webChatSendMessage = new WebChatSendMessage();
+        String corpId = "wwfd2708d6d7ac1469";
+        String corpSecret = "GXy9uAeT4H58gTzq9YIit_elGOVuWl0115V47Cfb6is";
+        String AgentId = "1000002";
+        String access_token =webChatSendMessage.getAccessToken(corpId,corpSecret,"0");
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("touser", "@all");//需要推送的用户 UserID1|UserID2|UserID3
+        jsonObject.put("agentid", AgentId);
+        JSONObject mytext = new JSONObject();
+        mytext.put("content","这是一条测试内容");//推送消息内容
+        jsonObject.put("msgtype", "text");
+        jsonObject.put("text",mytext);
+
+        try {
+            String response= HttpUtils.httpPostMethod("https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=" + access_token, jsonObject);
+            ResultJson resultJson = new ResultJson(EnumsUtils.SUCCESS);
+            log.info("发送企业微信消息成功，response = " + resultJson);
+
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
 
     }
 
 
-    private  String getAccessToken(String qywxId, String secret2) {
-        String url="https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid="+qywxId+"&corpsecret="+secret2+"";
+    private  String getAccessToken(String corpId, String corpsecret,String flag) {
+        // 0 企业微信，1 小程序
+        String url="";
+        if("0".equals(flag)){
+            url="https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid="+corpId+"&corpsecret="+corpsecret;
+        }else{
+            url="https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid="+corpId+"&secret="+corpsecret;
+        }
         String token=null;
         try {
             token = HttpUtils.httpGetMethod(url);

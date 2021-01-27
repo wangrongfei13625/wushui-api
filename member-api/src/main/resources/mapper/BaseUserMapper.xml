@@ -3,10 +3,41 @@
 <mapper namespace="com.huaxin.member.mapper.BaseUserMapper">
 
     <select id="findByUser" parameterType="map" resultType="map">
-        select u.id,u.person_id,u.username,p.name
-        from ho_user u
-        left join ho_person p on u.person_id=p.id
+        select
+          p.id,p.CODE,p.NAME,p.DESCRIPTION,p.PERSON_TELL,SEX,p.TELEPHONE,p.DEGREE,d.ID as orgId,d.NAME as orgName
+
+        from HO_PERSON p
+
+        left join HO_DEPARTMENT_PERSON h on p.ID=h.PERSON_ID
+
+        left join HO_DEPARTMENT d on h.DEPARTMENT_ID=d.ID
+
         where 1=1
+         <if test="userName!=null and userName!=''">
+             and p.name  like '%'+#{userName}+'%'
+         </if>
+        <if test="userId!=null and userId!=''">
+            and p.id =#{userId}
+        </if>
+        <if test="orgId!=null and orgId!=''">
+            and d.id =#{orgId}
+        </if>
+        order by id desc
+    </select>
+
+    <select id="findHoDepartment" parameterType="map" resultType="map">
+        select
+          d.id,d.CODE,d.NAME,d.DESCRIPTION,d.COMPANY_CODE,d.pid
+        from HO_DEPARTMENT d
+        where 1=1
+        <if test="orgName!=null and orgName!=''">
+            and d.name  like '%'+#{orgName}+'%'
+        </if>
+        <if test="orgId!=null and orgId!=''">
+            and d.id =#{orgId}
+        </if>
+
+        order by d.id desc
     </select>
 
 </mapper>
